@@ -183,14 +183,9 @@
         // Fonction pour charger les points d'intérêt depuis le fichier JSON
         async function chargerPointsInteret() {
             try {
-                // OPTION 1 : Fichier local (même dossier)
-                // const response = await fetch('points-interet.json');
+                const response = await fetch('https://geo-asso.github.io/carte/points-interet.json');
                 
-                // OPTION 2 : GitHub Pages (remplacez par votre URL)
-                // const response = await fetch('https://VOTRE_USERNAME.github.io/VOTRE_REPO/points-interet.json');
-                
-                // OPTION 3 : GitHub Raw (contenu brut du fichier)
-                const response = await fetch('https://raw.githubusercontent.com/geo-asso/carte/refs/heads/main/points-interet.json');
+                //const response = await fetch('https://raw.githubusercontent.com/geo-asso/carte/refs/heads/main/points-interet.json');
                 
                 if (!response.ok) {
                     throw new Error('Impossible de charger le fichier JSON');
@@ -265,7 +260,7 @@
             });
 
             document.getElementById('total-count').textContent = stats.total;
-            document.getElementById('cirque-count').textContent = stats.restaurant;
+            document.getElementById('cirque-count').textContent = stats.cirque;
             document.getElementById('stats').style.display = 'flex';
         }
 
