@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un Point d'Intérêt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        label .required {
+            color: #e74c3c;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .help-text {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-submit {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-submit:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+        }
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .info-box h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .info-box p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .coordinate-helper {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .coordinate-helper a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .coordinate-helper a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Retour à la carte</a>
+        
+        <h1>📧 Ajouter un Point d'Intérêt</h1>
+        <p class="subtitle">Envoyez votre proposition par email</p>
+
+        <div class="info-box">
+            <h3>📋 Processus de contribution</h3>
+            <p>En cliquant sur "Envoyer par email", votre client email s'ouvrira avec un message pré-rempli. Vérifiez les informations et cliquez sur Envoyer dans votre client email.</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="poiForm">
+            <div class="form-group">
+                <label for="nom">Nom du lieu <span class="required">*</span></label>
+                <input type="text" id="nom" name="nom" required placeholder="Ex: Restaurant Le Gourmet">
+            </div>
+
+            <div class="form-group">
+                <label for="categorie">Catégorie <span class="required">*</span></label>
+                <select id="categorie" name="categorie" required>
+                    <option value="">-- Choisir une catégorie --</option>
+                    <option value="restaurant">🍽️ Restaurant</option>
+                    <option value="musee">🏛️ Musée</option>
+                    <option value="parc">🌳 Parc</option>
+                    <option value="commerce">🏪 Commerce</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="coordonnees">Coordonnées GPS <span class="required">*</span></label>
+                <input type="text" id="coordonnees" name="coordonnees" required 
+                       placeholder="Ex: 48.359944, 2.824667">
+                <p class="help-text">Format: latitude, longitude (séparés par une virgule)</p>
+                <div class="coordinate-helper">
+                    💡 <strong>Comment trouver les coordonnées ?</strong><br>
+                    1. Allez sur <a href="https://www.google.com/maps" target="_blank">Google Maps</a><br>
+                    2. Faites un clic droit sur le lieu<br>
+                    3. Cliquez sur les coordonnées en haut pour les copier<br>
+                    4. Collez directement dans le champ ci-dessus (format: 48.359944, 2.824667)
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="adresse">Adresse complète <span class="required">*</span></label>
+                <input type="text" id="adresse" name="adresse" required 
+                       placeholder="Ex: 15 Rue de la Paix, 77000 Melun">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description <span class="required">*</span></label>
+                <textarea id="description" name="description" required 
+                          placeholder="Décrivez ce lieu en quelques mots..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="telephone">Téléphone</label>
+                <input type="tel" id="telephone" name="telephone" 
+                       placeholder="Ex: 01 42 00 00 00">
+            </div>
+
+            <div class="form-group">
+                <label for="horaires">Horaires</label>
+                <input type="text" id="horaires" name="horaires" 
+                       placeholder="Ex: Lun-Ven 9h-18h">
+            </div>
+
+            <div class="form-group">
+                <label for="site_web">Site web</label>
+                <input type="url" id="site_web" name="site_web" 
+                       placeholder="https://exemple.com">
+            </div>
+
+            <div class="form-group">
+                <label for="contributeur_nom">Votre nom (optionnel)</label>
+                <input type="text" id="contributeur_nom" name="contributeur_nom" 
+                       placeholder="Pour signature">
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="btn-cancel" onclick="window.location.href='index.html'">
+                    Annuler
+                </button>
+                <button type="submit" class="btn-submit">
+                    📧 Envoyer par email
+                </button>
+            </div>
+        </form>
+
+        <div class="info-box" style="margin-top: 30px;">
+            <h3>ℹ️ Comment ça fonctionne ?</h3>
+            <p>Le formulaire ouvrira votre client email (Gmail, Outlook, Thunderbird, etc.) avec toutes les informations pré-remplies. Vous devrez simplement cliquer sur "Envoyer" dans votre application email.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('poiForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Récupérer et parser les coordonnées
+            const coordonneesInput = document.getElementById('coordonnees').value.trim();
+            const coordsParts = coordonneesInput.split(',').map(c => c.trim());
+            
+            if (coordsParts.length !== 2) {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.textContent = '⚠️ Format de coordonnées invalide. Utilisez le format: latitude, longitude (ex: 48.359944, 2.824667)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const lat = parseFloat(coordsParts[0]);
+            const lng = parseFloat(coordsParts[1]);
+
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.textContent = '⚠️ Coordonnées invalides. La latitude doit être entre -90 et 90, la longitude entre -180 et 180.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const formData = {
+                nom: document.getElementById('nom').value,
+                categorie: document.getElementById('categorie').value,
+                lat: lat,
+                lng: lng,
+                adresse: document.getElementById('adresse').value,
+                description: document.getElementById('description').value,
+                telephone: document.getElementById('telephone').value || 'Non renseigné',
+                horaires: document.getElementById('horaires').value || 'Non renseigné',
+                site_web: document.getElementById('site_web').value || 'Non renseigné',
+                contributeur: document.getElementById('contributeur_nom').value || 'Anonyme'
+            };
+
+            // Créer le JSON pour l'email
+            const pointJSON = {
+                nom: formData.nom,
+                categorie: formData.categorie,
+                lat: formData.lat,
+                lng: formData.lng,
+                description: formData.description,
+                adresse: formData.adresse
+            };
+
+            if (formData.telephone !== 'Non renseigné') pointJSON.telephone = formData.telephone;
+            if (formData.horaires !== 'Non renseigné') pointJSON.horaires = formData.horaires;
+            if (formData.site_web !== 'Non renseigné') pointJSON.site_web = formData.site_web;
+
+            // Créer le contenu de l'email
+            const sujet = encodeURIComponent(`[Carte Interactive] Nouveau point d'intérêt : ${formData.nom}`);
+            
+            const corps = encodeURIComponent(`Bonjour,
+
+Je souhaite proposer l'ajout d'un nouveau point d'intérêt sur la carte interactive.
+
+=== INFORMATIONS DU POINT ===
+
+Nom : ${formData.nom}
+Catégorie : ${formData.categorie}
+Latitude : ${formData.lat}
+Longitude : ${formData.lng}
+Adresse : ${formData.adresse}
+Description : ${formData.description}
+Téléphone : ${formData.telephone}
+Horaires : ${formData.horaires}
+Site web : ${formData.site_web}
+
+=== DONNÉES JSON À AJOUTER ===
+
+${JSON.stringify(pointJSON, null, 2)}
+
+=== LIEN GOOGLE MAPS ===
+
+https://www.google.com/maps?q=${formData.lat},${formData.lng}
+
+---
+Proposé par : ${formData.contributeur}
+
+Cordialement`);
+
+            // Créer le lien mailto
+            const mailtoLink = `mailto:geo-asso@proton.me?subject=${sujet}&body=${corps}`;
+            
+            // Ouvrir le client email
+            window.location.href = mailtoLink;
+        });
+    </script>
+</body>
+</html>
