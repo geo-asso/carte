@@ -1,562 +1,345 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Ajouter un Point d'Intérêt</title>
-
-    <!-- Leaflet CSS pour la minimap (sans integrity/crossorigin pour éviter blocage si le hash ne correspond pas) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-        }
-        h1 { color: #2c3e50; margin-bottom: 10px; text-align: center; }
-        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
-        .form-group { margin-bottom: 25px; }
-        label { display: block; color: #2c3e50; font-weight: 600; margin-bottom: 8px; }
-        label .required { color: #e74c3c; }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
-            transition: border-color 0.3s;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
-        textarea { resize: vertical; min-height: 100px; }
-        .help-text { font-size: 13px; color: #7f8c8d; margin-top: 5px; }
-        .button-group { display: flex; gap: 15px; margin-top: 30px; }
-        button {
-            flex: 1;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-submit { background: #27ae60; color: white; }
-        .btn-submit:hover { background: #229954; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(39,174,96,0.4); }
-        .btn-cancel { background: #95a5a6; color: white; }
-        .btn-cancel:hover { background: #7f8c8d; }
-        .info-box { background: #e8f4f8; border-left: 4px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
-        .info-box h3 { color: #2c3e50; margin-bottom: 8px; font-size: 16px; }
-        .info-box p { color: #555; font-size: 14px; line-height: 1.6; }
-        .error-message {
-            display: none;
-            background: #f8d7da;
-            border: 2px solid #dc3545;
-            color: #721c24;
-            padding: 14px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .success-message {
-            display: none;
-            background: #e6ffed;
-            border: 2px solid #27ae60;
-            color: #155724;
-            padding: 14px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .back-link { display: inline-block; color: #667eea; text-decoration: none; margin-bottom: 20px; font-weight: 600; }
-        .back-link:hover { text-decoration: underline; }
-        .coordinate-helper {
-            background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 13px;
-        }
-        .coordinate-helper a { color: #667eea; text-decoration: none; font-weight: 600; }
-        .coordinate-helper a:hover { text-decoration: underline; }
-
-        /* Inline address + button */
-        .address-row { display: flex; gap: 10px; align-items: flex-start; }
-        .address-row input { flex: 1; }
-        .inline-btn {
-            padding: 10px 12px; border: none; border-radius: 8px; background: #667eea; color: white; font-weight: 600;
-            cursor: pointer; white-space: nowrap; align-self: center; display: inline-flex; gap: 8px; align-items: center;
-        }
-        .inline-btn[disabled] { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; }
-        .inline-btn:hover:not([disabled]) { background: #5665d4; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(102,126,234,0.25); }
-
-        /* Spinner (intégré dans le bouton) */
-        .spinner {
-            width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
-            border-radius: 50%; animation: spin 1s linear infinite; display: inline-block;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .muted { color: #7f8c8d; font-size: 13px; }
-
-        /* Minimaps style */
-        #miniMap {
-            width: 100%;
-            height: 260px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            margin-top: 12px;
-            display: none; /* cachée tant qu'il n'y a pas de coordonnées */
-            overflow: hidden;
-        }
-        .map-controls { margin-top: 8px; display: flex; gap: 10px; align-items: center; }
-        .map-hint { font-size: 13px; color: #7f8c8d; }
-
-        /* petit style pour lien de reset coords */
-        .reset-coords {
-            background: #95a5a6; color: white; padding: 8px 10px; border-radius: 8px; border: none; cursor: pointer;
-        }
-        .reset-coords:hover { background: #7f8c8d; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ajouter un point d'intérêt — Formulaire</title>
+  <style>
+    body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background:#f6f8fa; margin:0; padding:20px; }
+    .container { max-width:900px; margin:0 auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    h1 { text-align:center; color:#2c3e50; margin-bottom:10px; }
+    form { display:grid; gap:12px; }
+    label { font-weight:600; color:#34495e; }
+    input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+      width:100%; padding:10px; border-radius:6px; border:1px solid #dfe6ee; outline:none;
+    }
+    textarea { min-height:100px; resize:vertical; }
+    .row { display:flex; gap:12px; }
+    .row > * { flex:1; }
+    .btn { display:inline-block; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; }
+    .btn-primary { background:#27ae60; color:#fff; font-weight:700; }
+    .btn-ghost { background:transparent; border:1px solid #d0d7df; color:#2c3e50; }
+    .small { font-size:13px; color:#7f8c8d; }
+    .horaires-list { background:#fbfcfd; padding:12px; border-radius:8px; border:1px dashed #e6eef6; }
+    .horaires-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+    .horaires-row input { flex:1; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    pre#json-preview { background:#0e1724; color:#e6f6ff; padding:12px; border-radius:8px; overflow:auto; max-height:300px; }
+    .hint { font-size:13px; color:#586b7a; }
+    .geo-btn { padding:8px 10px; border-radius:6px; border:none; background:#3498db; color:#fff; cursor:pointer; }
+    .remove-btn { background:#e74c3c; color:#fff; padding:6px 10px; border-radius:6px; border:none; cursor:pointer; }
+    .inline { display:inline-flex; gap:8px; align-items:center; }
+    footer { margin-top:14px; font-size:13px; color:#7f8c8d; text-align:center; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Retour à la carte</a>
+  <div class="container">
+    <h1>➕ Ajouter un point d'intérêt</h1>
 
-        <h1>📧 Ajouter un Point d'Intérêt</h1>
-        <p class="subtitle">Envoyez votre proposition par email</p>
+    <form id="poi-form">
+      <div>
+        <label for="nom">Nom</label>
+        <input id="nom" name="nom" type="text" required placeholder="Nom du lieu (ex : Ressourcerie ABC)" />
+      </div>
 
-        <div class="info-box">
-            <h3>📋 Processus de contribution</h3>
-            <p>En cliquant sur "Envoyer par email", votre client email s'ouvrira avec un message pré-rempli. Vérifiez les informations et cliquez sur Envoyer dans votre client email.</p>
+      <div>
+        <label for="categorie">Catégorie</label>
+        <select id="categorie" name="categorie" required>
+          <option value="ressourcerie">ressourcerie</option>
+          <option value="repaircafé">repaircafé</option>
+          <option value="autre">autre</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="adresse">Adresse (libre)</label>
+        <input id="adresse" name="adresse" type="text" placeholder="Adresse complète" />
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="lat">Latitude</label>
+          <input id="lat" name="lat" type="text" placeholder="46.12345" />
         </div>
-
-        <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
-        <div id="successMessage" class="success-message" role="status" aria-live="polite"></div>
-
-        <form id="poiForm">
-            <div class="form-group">
-                <label for="nom">Nom du lieu <span class="required">*</span></label>
-                <input type="text" id="nom" name="nom" required placeholder="Ex: Mon repair café" />
-            </div>
-
-            <div class="form-group">
-                <label for="categorie">Catégorie <span class="required">*</span></label>
-                <select id="categorie" name="categorie" required>
-                    <option value="">-- Choisir une catégorie --</option>
-                    <option value="repair café">repair café</option>
-                    <option value="ressourcerie">ressourcerie</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="coordonnees">Coordonnées GPS <span class="required">*</span></label>
-                <input type="text" id="coordonnees" name="coordonnees" required placeholder="Ex: 48.359944, 2.824667" />
-                <p class="help-text">Format: latitude, longitude (séparés par une virgule)</p>
-                <div class="coordinate-helper">
-                    💡 <strong>Comment trouver les coordonnées ?</strong><br />
-                    1. Allez sur <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a><br />
-                    2. Faites un clic droit sur le lieu<br />
-                    3. Cliquez sur les coordonnées en haut pour les copier<br />
-                    4. Collez directement dans le champ ci-dessus (format: 48.359944, 2.824667)
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="adresse">Adresse complète <span class="required">*</span></label>
-                <div class="address-row">
-                    <input type="text" id="adresse" name="adresse" required placeholder="Ex: 15 Rue de la Paix, 77000 Melun" />
-                    <button type="button" id="geolocateBtn" class="inline-btn" title="Obtenir les coordonnées depuis l'adresse" aria-live="polite">
-                        <span id="geolocateIcon">🔎</span>
-                        <span id="geolocateText">Géolocaliser</span>
-                    </button>
-                </div>
-                <p class="muted">Cliquez sur "Géolocaliser" pour remplir automatiquement les coordonnées GPS à partir de l'adresse (utilise OpenStreetMap).</p>
-
-                <!-- Minimaps + contrôles -->
-                <div id="miniMap" aria-label="Mini carte de vérification des coordonnées"></div>
-                <div class="map-controls" id="mapControls" style="display:none;">
-                    <div class="map-hint">Vérifiez la position sur la carte. Cliquez sur la carte pour repositionner le marqueur.</div>
-                    <button type="button" id="resetMapBtn" class="reset-coords" title="Vider les coordonnées">Effacer coordonnées</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="description">Description <span class="required">*</span></label>
-                <textarea id="description" name="description" required placeholder="Décrivez ce lieu en quelques mots..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="telephone">Téléphone</label>
-                <input type="tel" id="telephone" name="telephone" placeholder="Ex: 01 42 00 00 00" />
-            </div>
-
-            <div class="form-group">
-                <label for="email">E-mail</label>
-                <input type="tel" id="email" name="email" placeholder="geo-asso@protonmail.com" />
-            </div>
-
-            <div class="form-group">
-                <label for="horaires">Horaires</label>
-                <input type="text" id="horaires" name="horaires" placeholder="Ex: Lun-Ven 9h-18h" />
-            </div>
-
-            <div class="form-group">
-                <label for="site_web">Site web</label>
-                <input type="url" id="site_web" name="site_web" placeholder="https://exemple.com" />
-            </div>
-
-            <div class="form-group">
-                <label for="contributeur_nom">Votre nom (optionnel)</label>
-                <input type="text" id="contributeur_nom" name="contributeur_nom" placeholder="Pour signature" />
-            </div>
-
-            <div class="button-group">
-                <button type="button" class="btn-cancel" onclick="window.location.href='index.html'">Annuler</button>
-                <button type="submit" class="btn-submit">📧 Envoyer par email</button>
-            </div>
-        </form>
-
-        <div class="info-box" style="margin-top: 30px;">
-            <h3>ℹ️ Comment ça fonctionne ?</h3>
-            <p>Le formulaire ouvrira votre client email (Gmail, Outlook, Thunderbird, etc.) avec toutes les informations pré-remplies. Vous devrez simplement cliquer sur "Envoyer" dans votre application.</p>
+        <div>
+          <label for="lng">Longitude</label>
+          <input id="lng" name="lng" type="text" placeholder="1.23456" />
         </div>
+      </div>
+
+      <div class="inline">
+        <button type="button" id="geocode-btn" class="geo-btn">🔎 Trouver coordonnées (Nominatim)</button>
+        <div class="hint">Saisissez une adresse puis cliquez sur "Trouver coordonnées" pour remplir lat/lng automatiquement.</div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="telephone">Téléphone</label>
+          <input id="telephone" name="telephone" type="tel" placeholder="0123456789" />
+        </div>
+        <div>
+          <label for="email">E‑mail</label>
+          <input id="email" name="email" type="email" placeholder="contact@example.org" />
+        </div>
+      </div>
+
+      <div>
+        <label for="site_web">Site web (optionnel)</label>
+        <input id="site_web" name="site_web" type="text" placeholder="https://..." />
+      </div>
+
+      <div>
+        <label for="description">Description</label>
+        <textarea id="description" name="description" placeholder="Courte description du lieu"></textarea>
+      </div>
+
+      <div>
+        <label>Horaires (format structuré recommandé)</label>
+        <div class="horaires-list" id="horaires-list">
+          <!-- lignes horaires ajoutées dynamiquement ici -->
+        </div>
+        <div class="actions">
+          <button type="button" id="add-horaire" class="btn btn-ghost">➕ Ajouter un horaire</button>
+          <span class="small">Chaque horaire = { "jours": "Lundi - Vendredi", "heures": "09:00 - 12:00, 14:00 - 18:00" }</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="raw-horaires">Horaires (ou coller un bloc texte)</label>
+          <textarea id="raw-horaires" placeholder="Optionnel : coller un bloc texte avec sauts de ligne si vous préférez"></textarea>
+          <div class="small">Si vous remplissez à la fois les "horaires structurés" et le "bloc texte", le structuré sera prioritaire.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">Générer JSON</button>
+        <button type="button" id="clear-form" class="btn btn-ghost">Réinitialiser</button>
+      </div>
+    </form>
+
+    <h2>Aperçu JSON</h2>
+    <pre id="json-preview">{}</pre>
+
+    <div class="actions" style="margin-top:10px;">
+      <button id="copy-json" class="btn btn-ghost">Copier le JSON</button>
+      <button id="download-json" class="btn btn-ghost">Télécharger (.json)</button>
+      <button id="add-to-storage" class="btn btn-ghost">Ajouter au stockage local</button>
     </div>
 
-    <!-- Leaflet JS pour la minimap (sans integrity/crossorigin) -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <footer>
+      Après génération : copiez/téléchargez le JSON puis ajoutez-le au fichier points-interet.json de ton dépôt (ou envoie-le à ton API si tu en as une).
+    </footer>
+  </div>
 
-    <script>
-        // Elements
-        const geolocateBtn = document.getElementById('geolocateBtn');
-        const geolocateIcon = document.getElementById('geolocateIcon');
-        const geolocateText = document.getElementById('geolocateText');
-        const adresseInput = document.getElementById('adresse');
-        const coordInput = document.getElementById('coordonnees');
-        const errorDiv = document.getElementById('errorMessage');
-        const successDiv = document.getElementById('successMessage');
-        const miniMapEl = document.getElementById('miniMap');
-        const mapControls = document.getElementById('mapControls');
-        const resetMapBtn = document.getElementById('resetMapBtn');
+  <script>
+    // Utilitaires
+    const $ = id => document.getElementById(id);
 
-        // Leaflet map state
-        let map = null;
-        let marker = null;
-        let isMapInitialized = false;
+    // Initialisation des horaires avec une ligne par défaut
+    const horairesList = $('horaires-list');
 
-        function showError(message) {
-            successDiv.style.display = 'none';
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
+    function createHoraireRow(jours = '', heures = '') {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'horaires-row';
+
+      const inputJ = document.createElement('input');
+      inputJ.type = 'text';
+      inputJ.placeholder = 'Jours (ex: Lundi - Vendredi)';
+      inputJ.value = jours;
+
+      const inputH = document.createElement('input');
+      inputH.type = 'text';
+      inputH.placeholder = 'Heures (ex: 09:00 - 12:00, 14:00 - 18:00)';
+      inputH.value = heures;
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'remove-btn';
+      remove.textContent = 'Suppr';
+      remove.onclick = () => wrapper.remove();
+
+      wrapper.appendChild(inputJ);
+      wrapper.appendChild(inputH);
+      wrapper.appendChild(remove);
+
+      return wrapper;
+    }
+
+    function addHoraire(j = '', h = '') {
+      horairesList.appendChild(createHoraireRow(j, h));
+    }
+
+    // Ajout initial
+    addHoraire();
+
+    $('add-horaire').addEventListener('click', e => {
+      addHoraire();
+    });
+
+    // Geocoding simple via Nominatim (OpenStreetMap)
+    $('geocode-btn').addEventListener('click', async () => {
+      const adresse = $('adresse').value.trim();
+      if (!adresse) { alert('Saisissez d\'abord une adresse.'); return; }
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(adresse);
+      try {
+        $('geocode-btn').disabled = true;
+        $('geocode-btn').textContent = 'Recherche…';
+        const resp = await fetch(url, { headers: { 'Accept-Language': 'fr' }});
+        const results = await resp.json();
+        if (results && results.length) {
+          const r = results[0];
+          $('lat').value = r.lat;
+          $('lng').value = r.lon;
+          alert('Coordonnées trouvées et insérées.');
+        } else {
+          alert('Aucun résultat trouvé pour cette adresse.');
         }
+      } catch (err) {
+        console.error(err);
+        alert('Erreur lors du géocodage.');
+      } finally {
+        $('geocode-btn').disabled = false;
+        $('geocode-btn').textContent = '🔎 Trouver coordonnées (Nominatim)';
+      }
+    });
 
-        function showSuccess(message) {
-            errorDiv.style.display = 'none';
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            setTimeout(() => {
-                successDiv.style.display = 'none';
-            }, 5000);
+    // Récupère horaires structurés depuis l'UI
+    function collectHorairesStructured() {
+      const rows = Array.from(horairesList.children);
+      const result = [];
+      rows.forEach(r => {
+        const inputs = r.querySelectorAll('input');
+        if (!inputs || inputs.length < 2) return;
+        const jours = inputs[0].value.trim();
+        const heures = inputs[1].value.trim();
+        if (jours || heures) {
+          result.push({ jours, heures });
         }
+      });
+      return result;
+    }
 
-        function setButtonLoading(loading) {
-            if (loading) {
-                geolocateBtn.disabled = true;
-                geolocateIcon.innerHTML = ''; // remove icon
-                // insert spinner
-                geolocateIcon.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
-                geolocateText.textContent = ' Recherche...';
-            } else {
-                geolocateBtn.disabled = false;
-                geolocateIcon.innerHTML = '🔎';
-                geolocateText.textContent = 'Géolocaliser';
-            }
+    // Validation simple lat/lng
+    function isValidCoord(v) {
+      if (v === null || v === undefined || String(v).trim() === '') return false;
+      return !isNaN(Number(v));
+    }
+
+    function buildPOI() {
+      const nom = $('nom').value.trim();
+      const categorie = $('categorie').value;
+      const adresse = $('adresse').value.trim();
+      const lat = $('lat').value.trim();
+      const lng = $('lng').value.trim();
+      const telephone = $('telephone').value.trim();
+      const email = $('email').value.trim();
+      const description = $('description').value.trim();
+      const site_web = $('site_web').value.trim();
+
+      // Horaires : priorité au structuré si non vide, sinon au bloc texte
+      let horaires = collectHorairesStructured();
+      if (horaires.length === 0) {
+        const raw = $('raw-horaires').value.trim();
+        if (raw) {
+          // convertir en tableau de lignes
+          const lines = raw.split(/\\r?\\n/).map(s => s.trim()).filter(Boolean);
+          horaires = lines; // on laisse en chaîne/array de chaînes pour index.html qui gère les deux
+        } else {
+          horaires = null;
         }
+      }
 
-        async function geocodeAddress(address) {
-            if (!address || address.trim().length < 5) {
-                showError('⚠️ Entrez une adresse valide avant de géolocaliser.');
-                return null;
-            }
+      const obj = {
+        nom: nom || '',
+        adresse: adresse || '',
+        lat: isValidCoord(lat) ? Number(lat) : null,
+        lng: isValidCoord(lng) ? Number(lng) : null,
+        categorie: categorie || 'autre',
+        telephone: telephone || '',
+        email: email || '',
+        description: description || '',
+        horaires: horaires,
+        site_web: site_web || ''
+      };
 
-            setButtonLoading(true);
-            errorDiv.style.display = 'none';
+      return obj;
+    }
 
-            try {
-                const params = new URLSearchParams({
-                    q: address,
-                    format: 'json',
-                    limit: '1',
-                    addressdetails: '0',
-                    'accept-language': 'fr'
-                });
-                const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+    // Rendu du preview JSON
+    function renderPreview(obj) {
+      const pretty = JSON.stringify(obj, null, 2);
+      $('json-preview').textContent = pretty;
+    }
 
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
+    // Soumission (génère et affiche le JSON)
+    $('poi-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const poi = buildPOI();
 
-                if (!response.ok) throw new Error('Erreur réseau lors de la géolocalisation.');
-
-                const results = await response.json();
-                if (!results || results.length === 0) {
-                    showError('⚠️ Aucune coordonnée trouvée pour cette adresse. Essayez d\'être plus précis.');
-                    return null;
-                }
-
-                const top = results[0];
-                const lat = parseFloat(top.lat);
-                const lon = parseFloat(top.lon);
-
-                if (isNaN(lat) || isNaN(lon)) {
-                    showError('⚠️ Résultat de géolocalisation invalide.');
-                    return null;
-                }
-
-                // Mettre à jour le champ coordonnées
-                coordInput.value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                showSuccess('✅ Coordonnées mises à jour depuis l\'adresse.');
-
-                updateMap(lat, lon, true);
-                return { lat, lon };
-            } catch (err) {
-                console.error(err);
-                showError('⚠️ Impossible de géolocaliser l\'adresse pour le moment. Vérifiez votre connexion ou réessayez plus tard.');
-                return null;
-            } finally {
-                setButtonLoading(false);
-            }
+      // simple validation - nom et coordonnées
+      if (!poi.nom) { alert('Le nom est requis.'); return; }
+      if (poi.lat === null || poi.lng === null) {
+        if (!confirm('Les coordonnées lat/lng sont absentes ou invalides. Continuer quand même ?')) {
+          return;
         }
+      }
 
-        // Initialise la minimap (la première fois qu'on en a besoin)
-        function initMap() {
-            // si Leaflet n'est pas chargé, afficher un message utilisateur clair et abandonner
-            if (typeof L === 'undefined') {
-                showError('⚠️ La bibliothèque de carte (Leaflet) n\'a pas pu être chargée. Vérifiez votre connexion ou retirez les attributs "integrity"/"crossorigin" si présents.');
-                return;
-            }
+      renderPreview(poi);
+      alert('JSON généré dans l\'aperçu. Copiez/téléchargez-le puis ajoutez-le au fichier points-interet.json.');
+    });
 
-            if (isMapInitialized) return;
-            // afficher la div
-            miniMapEl.style.display = 'block';
-            mapControls.style.display = 'flex';
+    // Copier le JSON
+    $('copy-json').addEventListener('click', async () => {
+      const txt = $('json-preview').textContent;
+      try {
+        await navigator.clipboard.writeText(txt);
+        alert('JSON copié dans le presse-papiers.');
+      } catch (err) {
+        alert('Impossible de copier automatiquement. Sélectionnez manuellement le texte pour copier.');
+      }
+    });
 
-            // init leaflet
-            map = L.map('miniMap', { attributionControl: false }).setView([46.8, 2.4], 6); // France centré par défaut
+    // Télécharger le JSON
+    $('download-json').addEventListener('click', () => {
+      const txt = $('json-preview').textContent;
+      const blob = new Blob([txt], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeName = ($('nom').value || 'poi').replace(/[^a-z0-9-_]/gi, '_').toLowerCase();
+      a.download = safeName + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-            }).addTo(map);
+    // Ajouter au localStorage (utile pour tests locaux)
+    $('add-to-storage').addEventListener('click', () => {
+      try {
+        const raw = $('json-preview').textContent;
+        const item = JSON.parse(raw || '{}');
+        const existing = JSON.parse(localStorage.getItem('points_interet_local') || '[]');
+        existing.push(item);
+        localStorage.setItem('points_interet_local', JSON.stringify(existing, null, 2));
+        alert('Point ajouté au stockage local (localStorage). Pour tests uniquement.');
+      } catch (err) {
+        alert('Aucun JSON valide trouvé dans l\'aperçu. Générer d\'abord.');
+      }
+    });
 
-            // click to set marker and update coords
-            map.on('click', function(e) {
-                const { lat, lng } = e.latlng;
-                setMarker(lat, lng, true);
-                coordInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                showSuccess('✅ Coordonnées mises à jour depuis la carte.');
-            });
+    // Clear form
+    $('clear-form').addEventListener('click', () => {
+      if (!confirm('Réinitialiser le formulaire ?')) return;
+      $('poi-form').reset();
+      while (horairesList.firstChild) horairesList.removeChild(horairesList.firstChild);
+      addHoraire();
+      $('json-preview').textContent = '{}';
+    });
 
-            isMapInitialized = true;
-        }
-
-        function setMarker(lat, lon, pan = true) {
-            initMap();
-            if (typeof L === 'undefined') return; // sécurité supplémentaire
-
-            if (!marker) {
-                marker = L.marker([lat, lon], { draggable: true }).addTo(map);
-                // when marker is dragged, update coords input
-                marker.on('dragend', function(e) {
-                    const pos = marker.getLatLng();
-                    coordInput.value = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
-                    showSuccess('✅ Coordonnées mises à jour depuis le marqueur.');
-                });
-            } else {
-                marker.setLatLng([lat, lon]);
-            }
-            if (pan) map.setView([lat, lon], 16);
-            // ensure map renders properly if it was hidden initially
-            setTimeout(() => { map.invalidateSize(); }, 200);
-        }
-
-        function updateMap(lat, lon, showIfHidden = false) {
-            if (lat === undefined || lon === undefined) return;
-            if (!isMapInitialized && showIfHidden) initMap();
-            if (!isMapInitialized) initMap();
-            if (typeof L === 'undefined') return;
-            setMarker(lat, lon, true);
-        }
-
-        // bouton geolocate
-        geolocateBtn.addEventListener('click', function () {
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
-            const address = adresseInput.value.trim();
-            geocodeAddress(address);
-        });
-
-        // Si l'utilisateur édite manuellement les coordonnées -> mettre à jour la carte
-        coordInput.addEventListener('blur', function() {
-            const v = coordInput.value.trim();
-            if (!v) {
-                // si champ vide, cacher la carte
-                miniMapEl.style.display = 'none';
-                mapControls.style.display = 'none';
-                return;
-            }
-            const parts = v.split(',').map(s => s.trim());
-            if (parts.length !== 2) {
-                showError('⚠️ Format de coordonnées invalide. Utilisez: latitude, longitude.');
-                return;
-            }
-            const lat = parseFloat(parts[0]);
-            const lon = parseFloat(parts[1]);
-            if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-                showError('⚠️ Coordonnées invalides. La latitude doit être entre -90 et 90, la longitude entre -180 et 180.');
-                return;
-            }
-            // ok -> update map and clear errors
-            errorDiv.style.display = 'none';
-            updateMap(lat, lon, true);
-            showSuccess('✅ Coordonnées affichées sur la carte.');
-        });
-
-        // Effacer coords
-        resetMapBtn.addEventListener('click', function() {
-            coordInput.value = '';
-            if (marker && map) {
-                map.removeLayer(marker);
-                marker = null;
-            }
-            miniMapEl.style.display = 'none';
-            mapControls.style.display = 'none';
-            showSuccess('Coordonnées effacées.');
-        });
-
-        // Auto géolocaliser au blur de l'adresse si coords vides (comportement optionnel)
-        adresseInput.addEventListener('blur', function() {
-            const address = adresseInput.value.trim();
-            if (address.length > 5 && !coordInput.value.trim()) {
-                // légère temporisation pour ne pas gêner la saisie
-                setTimeout(() => {
-                    if (!coordInput.value.trim()) geocodeAddress(address);
-                }, 400);
-            }
-        });
-
-        // ---------------------------
-        // Form submit (existant)
-        // ---------------------------
-        document.getElementById('poiForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            errorDiv.style.display = 'none';
-
-            // Récupérer et parser les coordonnées
-            const coordonneesInput = document.getElementById('coordonnees').value.trim();
-            const coordsParts = coordonneesInput.split(',').map(c => c.trim());
-
-            if (coordsParts.length !== 2) {
-                const errorDivLocal = document.getElementById('errorMessage');
-                errorDivLocal.textContent = '⚠️ Format de coordonnées invalide. Utilisez le format: latitude, longitude (ex: 48.359944, 2.824667)';
-                errorDivLocal.style.display = 'block';
-                return;
-            }
-
-            const lat = parseFloat(coordsParts[0]);
-            const lng = parseFloat(coordsParts[1]);
-
-            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                const errorDivLocal = document.getElementById('errorMessage');
-                errorDivLocal.textContent = '⚠️ Coordonnées invalides. La latitude doit être entre -90 et 90, la longitude entre -180 et 180.';
-                errorDivLocal.style.display = 'block';
-                return;
-            }
-
-            const formData = {
-                nom: document.getElementById('nom').value,
-                categorie: document.getElementById('categorie').value,
-                lat: lat,
-                lng: lng,
-                adresse: document.getElementById('adresse').value,
-                description: document.getElementById('description').value,
-                telephone: document.getElementById('telephone').value || 'Non renseigné',
-                horaires: document.getElementById('horaires').value || 'Non renseigné',
-                site_web: document.getElementById('site_web').value || 'Non renseigné',
-                contributeur: document.getElementById('contributeur_nom').value || 'Anonyme'
-            };
-
-            // Créer le JSON pour l'email
-            const pointJSON = {
-                nom: formData.nom,
-                categorie: formData.categorie,
-                lat: formData.lat,
-                lng: formData.lng,
-                description: formData.description,
-                adresse: formData.adresse
-            };
-
-            if (formData.telephone !== 'Non renseigné') pointJSON.telephone = formData.telephone;
-            if (formData.horaires !== 'Non renseigné') pointJSON.horaires = formData.horaires;
-            if (formData.site_web !== 'Non renseigné') pointJSON.site_web = formData.site_web;
-
-            // Créer le contenu de l'email
-            const sujet = encodeURIComponent(`[Carte Interactive] Nouveau point d'intérêt : ${formData.nom}`);
-
-            const corps = encodeURIComponent(`Bonjour,
-
-Je souhaite proposer l'ajout d'un nouveau point d'intérêt sur la carte interactive.
-
-=== INFORMATIONS DU POINT ===
-
-Nom : ${formData.nom}
-Catégorie : ${formData.categorie}
-Latitude : ${formData.lat}
-Longitude : ${formData.lng}
-Adresse : ${formData.adresse}
-Description : ${formData.description}
-Téléphone : ${formData.telephone}
-Horaires : ${formData.horaires}
-Site web : ${formData.site_web}
-
-=== DONNÉES JSON À AJOUTER ===
-
-${JSON.stringify(pointJSON, null, 2)}
-
-=== LIEN GOOGLE MAPS ===
-
-https://www.google.com/maps?q=${formData.lat},${formData.lng}
-
----
-Proposé par : ${formData.contributeur}
-
-Cordialement`);
-
-            // Créer le lien mailto
-            const mailtoLink = `mailto:geo-asso@proton.me?subject=${sujet}&body=${corps}`;
-
-            // Ouvrir le client email
-            window.location.href = mailtoLink;
-        });
-
-        // Si la page s'ouvre avec des coordonnées déjà présentes (pré-remplies), afficher la carte
-        (function checkInitialCoords() {
-            const v = coordInput.value.trim();
-            if (!v) return;
-            const parts = v.split(',').map(s => s.trim());
-            if (parts.length !== 2) return;
-            const lat = parseFloat(parts[0]);
-            const lon = parseFloat(parts[1]);
-            if (!isNaN(lat) && !isNaN(lon)) {
-                updateMap(lat, lon, true);
-            }
-        })();
-    </script>
+    // Pré-remplir le preview vide
+    renderPreview({});
+  </script>
 </body>
 </html>
