@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Ajouter un Point d'Intérêt</title>
+
+    <!-- Leaflet CSS pour la minimap (sans integrity/crossorigin pour éviter blocage si le hash ne correspond pas) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -17,35 +17,18 @@
             padding: 40px 20px;
         }
         .container {
-            max-width: 700px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 40px;
         }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        .subtitle {
-            text-align: center;
-            color: #7f8c8d;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 25px;
-        }
-        label {
-            display: block;
-            color: #2c3e50;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        label .required {
-            color: #e74c3c;
-        }
+        h1 { color: #2c3e50; margin-bottom: 10px; text-align: center; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+        .form-group { margin-bottom: 25px; }
+        label { display: block; color: #2c3e50; font-weight: 600; margin-bottom: 8px; }
+        label .required { color: #e74c3c; }
         input, select, textarea {
             width: 100%;
             padding: 12px 16px;
@@ -55,24 +38,10 @@
             font-family: inherit;
             transition: border-color 0.3s;
         }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        .help-text {
-            font-size: 13px;
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+        textarea { resize: vertical; min-height: 100px; }
+        .help-text { font-size: 13px; color: #7f8c8d; margin-top: 5px; }
+        .button-group { display: flex; gap: 15px; margin-top: 30px; }
         button {
             flex: 1;
             padding: 14px 24px;
@@ -83,79 +52,82 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        .btn-submit {
-            background: #27ae60;
-            color: white;
-        }
-        .btn-submit:hover {
-            background: #229954;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
-        }
-        .btn-cancel {
-            background: #95a5a6;
-            color: white;
-        }
-        .btn-cancel:hover {
-            background: #7f8c8d;
-        }
-        .info-box {
-            background: #e8f4f8;
-            border-left: 4px solid #3498db;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-        }
-        .info-box h3 {
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 16px;
-        }
-        .info-box p {
-            color: #555;
-            font-size: 14px;
-            line-height: 1.6;
-        }
+        .btn-submit { background: #27ae60; color: white; }
+        .btn-submit:hover { background: #229954; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(39,174,96,0.4); }
+        .btn-cancel { background: #95a5a6; color: white; }
+        .btn-cancel:hover { background: #7f8c8d; }
+        .info-box { background: #e8f4f8; border-left: 4px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
+        .info-box h3 { color: #2c3e50; margin-bottom: 8px; font-size: 16px; }
+        .info-box p { color: #555; font-size: 14px; line-height: 1.6; }
         .error-message {
             display: none;
             background: #f8d7da;
             border: 2px solid #dc3545;
             color: #721c24;
-            padding: 20px;
+            padding: 14px;
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .back-link {
-            display: inline-block;
-            color: #667eea;
-            text-decoration: none;
+        .success-message {
+            display: none;
+            background: #e6ffed;
+            border: 2px solid #27ae60;
+            color: #155724;
+            padding: 14px;
+            border-radius: 8px;
             margin-bottom: 20px;
-            font-weight: 600;
         }
-        .back-link:hover {
-            text-decoration: underline;
-        }
+        .back-link { display: inline-block; color: #667eea; text-decoration: none; margin-bottom: 20px; font-weight: 600; }
+        .back-link:hover { text-decoration: underline; }
         .coordinate-helper {
-            background: #f8f9fa;
-            padding: 15px;
+            background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 13px;
+        }
+        .coordinate-helper a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .coordinate-helper a:hover { text-decoration: underline; }
+
+        /* Inline address + button */
+        .address-row { display: flex; gap: 10px; align-items: flex-start; }
+        .address-row input { flex: 1; }
+        .inline-btn {
+            padding: 10px 12px; border: none; border-radius: 8px; background: #667eea; color: white; font-weight: 600;
+            cursor: pointer; white-space: nowrap; align-self: center; display: inline-flex; gap: 8px; align-items: center;
+        }
+        .inline-btn[disabled] { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; }
+        .inline-btn:hover:not([disabled]) { background: #5665d4; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(102,126,234,0.25); }
+
+        /* Spinner (intégré dans le bouton) */
+        .spinner {
+            width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+            border-radius: 50%; animation: spin 1s linear infinite; display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .muted { color: #7f8c8d; font-size: 13px; }
+
+        /* Minimaps style */
+        #miniMap {
+            width: 100%;
+            height: 260px;
             border-radius: 8px;
-            margin-top: 10px;
-            font-size: 13px;
+            border: 1px solid #e0e0e0;
+            margin-top: 12px;
+            display: none; /* cachée tant qu'il n'y a pas de coordonnées */
+            overflow: hidden;
         }
-        .coordinate-helper a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
+        .map-controls { margin-top: 8px; display: flex; gap: 10px; align-items: center; }
+        .map-hint { font-size: 13px; color: #7f8c8d; }
+
+        /* petit style pour lien de reset coords */
+        .reset-coords {
+            background: #95a5a6; color: white; padding: 8px 10px; border-radius: 8px; border: none; cursor: pointer;
         }
-        .coordinate-helper a:hover {
-            text-decoration: underline;
-        }
+        .reset-coords:hover { background: #7f8c8d; }
     </style>
 </head>
 <body>
     <div class="container">
         <a href="index.html" class="back-link">← Retour à la carte</a>
-        
+
         <h1>📧 Ajouter un Point d'Intérêt</h1>
         <p class="subtitle">Envoyez votre proposition par email</p>
 
@@ -164,101 +136,336 @@
             <p>En cliquant sur "Envoyer par email", votre client email s'ouvrira avec un message pré-rempli. Vérifiez les informations et cliquez sur Envoyer dans votre client email.</p>
         </div>
 
-        <div id="errorMessage" class="error-message"></div>
+        <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+        <div id="successMessage" class="success-message" role="status" aria-live="polite"></div>
 
         <form id="poiForm">
             <div class="form-group">
                 <label for="nom">Nom du lieu <span class="required">*</span></label>
-                <input type="text" id="nom" name="nom" required placeholder="Ex: Mon association">
+                <input type="text" id="nom" name="nom" required placeholder="Ex: Mon repair café" />
             </div>
 
             <div class="form-group">
                 <label for="categorie">Catégorie <span class="required">*</span></label>
                 <select id="categorie" name="categorie" required>
                     <option value="">-- Choisir une catégorie --</option>
-                    <option value="restaurant">Association</option>
-                    <option value="musee">Cirque</option>
+                    <option value="repair café">repair café</option>
+                    <option value="ressourcerie">ressourcerie</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="coordonnees">Coordonnées GPS <span class="required">*</span></label>
-                <input type="text" id="coordonnees" name="coordonnees" required 
-                       placeholder="Ex: 48.359944, 2.824667">
+                <input type="text" id="coordonnees" name="coordonnees" required placeholder="Ex: 48.359944, 2.824667" />
                 <p class="help-text">Format: latitude, longitude (séparés par une virgule)</p>
                 <div class="coordinate-helper">
-                    💡 <strong>Comment trouver les coordonnées ?</strong><br>
-                    1. Allez sur <a href="https://www.google.com/maps" target="_blank">Google Maps</a><br>
-                    2. Faites un clic droit sur le lieu<br>
-                    3. Cliquez sur les coordonnées en haut pour les copier<br>
+                    💡 <strong>Comment trouver les coordonnées ?</strong><br />
+                    1. Allez sur <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a><br />
+                    2. Faites un clic droit sur le lieu<br />
+                    3. Cliquez sur les coordonnées en haut pour les copier<br />
                     4. Collez directement dans le champ ci-dessus (format: 48.359944, 2.824667)
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="adresse">Adresse complète <span class="required">*</span></label>
-                <input type="text" id="adresse" name="adresse" required 
-                       placeholder="Ex: 15 Rue de la Paix, 77000 Melun">
+                <div class="address-row">
+                    <input type="text" id="adresse" name="adresse" required placeholder="Ex: 15 Rue de la Paix, 77000 Melun" />
+                    <button type="button" id="geolocateBtn" class="inline-btn" title="Obtenir les coordonnées depuis l'adresse" aria-live="polite">
+                        <span id="geolocateIcon">🔎</span>
+                        <span id="geolocateText">Géolocaliser</span>
+                    </button>
+                </div>
+                <p class="muted">Cliquez sur "Géolocaliser" pour remplir automatiquement les coordonnées GPS à partir de l'adresse (utilise OpenStreetMap).</p>
+
+                <!-- Minimaps + contrôles -->
+                <div id="miniMap" aria-label="Mini carte de vérification des coordonnées"></div>
+                <div class="map-controls" id="mapControls" style="display:none;">
+                    <div class="map-hint">Vérifiez la position sur la carte. Cliquez sur la carte pour repositionner le marqueur.</div>
+                    <button type="button" id="resetMapBtn" class="reset-coords" title="Vider les coordonnées">Effacer coordonnées</button>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="description">Description <span class="required">*</span></label>
-                <textarea id="description" name="description" required 
-                          placeholder="Décrivez ce lieu en quelques mots..."></textarea>
+                <textarea id="description" name="description" required placeholder="Décrivez ce lieu en quelques mots..."></textarea>
             </div>
 
             <div class="form-group">
                 <label for="telephone">Téléphone</label>
-                <input type="tel" id="telephone" name="telephone" 
-                       placeholder="Ex: 01 42 00 00 00">
+                <input type="tel" id="telephone" name="telephone" placeholder="Ex: 01 42 00 00 00" />
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="tel" id="email" name="email" placeholder="geo-asso@protonmail.com" />
             </div>
 
             <div class="form-group">
                 <label for="horaires">Horaires</label>
-                <input type="text" id="horaires" name="horaires" 
-                       placeholder="Ex: Lun-Ven 9h-18h">
+                <input type="text" id="horaires" name="horaires" placeholder="Ex: Lun-Ven 9h-18h" />
             </div>
 
             <div class="form-group">
                 <label for="site_web">Site web</label>
-                <input type="url" id="site_web" name="site_web" 
-                       placeholder="https://exemple.com">
+                <input type="url" id="site_web" name="site_web" placeholder="https://exemple.com" />
             </div>
 
             <div class="form-group">
                 <label for="contributeur_nom">Votre nom (optionnel)</label>
-                <input type="text" id="contributeur_nom" name="contributeur_nom" 
-                       placeholder="Pour signature">
+                <input type="text" id="contributeur_nom" name="contributeur_nom" placeholder="Pour signature" />
             </div>
 
             <div class="button-group">
-                <button type="button" class="btn-cancel" onclick="window.location.href='index.html'">
-                    Annuler
-                </button>
-                <button type="submit" class="btn-submit">
-                    📧 Envoyer par email
-                </button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='index.html'">Annuler</button>
+                <button type="submit" class="btn-submit">📧 Envoyer par email</button>
             </div>
         </form>
 
         <div class="info-box" style="margin-top: 30px;">
             <h3>ℹ️ Comment ça fonctionne ?</h3>
-            <p>Le formulaire ouvrira votre client email (Gmail, Outlook, Thunderbird, etc.) avec toutes les informations pré-remplies. Vous devrez simplement cliquer sur "Envoyer" dans votre application email.</p>
+            <p>Le formulaire ouvrira votre client email (Gmail, Outlook, Thunderbird, etc.) avec toutes les informations pré-remplies. Vous devrez simplement cliquer sur "Envoyer" dans votre application.</p>
         </div>
     </div>
 
+    <!-- Leaflet JS pour la minimap (sans integrity/crossorigin) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
+        // Elements
+        const geolocateBtn = document.getElementById('geolocateBtn');
+        const geolocateIcon = document.getElementById('geolocateIcon');
+        const geolocateText = document.getElementById('geolocateText');
+        const adresseInput = document.getElementById('adresse');
+        const coordInput = document.getElementById('coordonnees');
+        const errorDiv = document.getElementById('errorMessage');
+        const successDiv = document.getElementById('successMessage');
+        const miniMapEl = document.getElementById('miniMap');
+        const mapControls = document.getElementById('mapControls');
+        const resetMapBtn = document.getElementById('resetMapBtn');
+
+        // Leaflet map state
+        let map = null;
+        let marker = null;
+        let isMapInitialized = false;
+
+        function showError(message) {
+            successDiv.style.display = 'none';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            errorDiv.style.display = 'none';
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function setButtonLoading(loading) {
+            if (loading) {
+                geolocateBtn.disabled = true;
+                geolocateIcon.innerHTML = ''; // remove icon
+                // insert spinner
+                geolocateIcon.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+                geolocateText.textContent = ' Recherche...';
+            } else {
+                geolocateBtn.disabled = false;
+                geolocateIcon.innerHTML = '🔎';
+                geolocateText.textContent = 'Géolocaliser';
+            }
+        }
+
+        async function geocodeAddress(address) {
+            if (!address || address.trim().length < 5) {
+                showError('⚠️ Entrez une adresse valide avant de géolocaliser.');
+                return null;
+            }
+
+            setButtonLoading(true);
+            errorDiv.style.display = 'none';
+
+            try {
+                const params = new URLSearchParams({
+                    q: address,
+                    format: 'json',
+                    limit: '1',
+                    addressdetails: '0',
+                    'accept-language': 'fr'
+                });
+                const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error('Erreur réseau lors de la géolocalisation.');
+
+                const results = await response.json();
+                if (!results || results.length === 0) {
+                    showError('⚠️ Aucune coordonnée trouvée pour cette adresse. Essayez d\'être plus précis.');
+                    return null;
+                }
+
+                const top = results[0];
+                const lat = parseFloat(top.lat);
+                const lon = parseFloat(top.lon);
+
+                if (isNaN(lat) || isNaN(lon)) {
+                    showError('⚠️ Résultat de géolocalisation invalide.');
+                    return null;
+                }
+
+                // Mettre à jour le champ coordonnées
+                coordInput.value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                showSuccess('✅ Coordonnées mises à jour depuis l\'adresse.');
+
+                updateMap(lat, lon, true);
+                return { lat, lon };
+            } catch (err) {
+                console.error(err);
+                showError('⚠️ Impossible de géolocaliser l\'adresse pour le moment. Vérifiez votre connexion ou réessayez plus tard.');
+                return null;
+            } finally {
+                setButtonLoading(false);
+            }
+        }
+
+        // Initialise la minimap (la première fois qu'on en a besoin)
+        function initMap() {
+            // si Leaflet n'est pas chargé, afficher un message utilisateur clair et abandonner
+            if (typeof L === 'undefined') {
+                showError('⚠️ La bibliothèque de carte (Leaflet) n\'a pas pu être chargée. Vérifiez votre connexion ou retirez les attributs "integrity"/"crossorigin" si présents.');
+                return;
+            }
+
+            if (isMapInitialized) return;
+            // afficher la div
+            miniMapEl.style.display = 'block';
+            mapControls.style.display = 'flex';
+
+            // init leaflet
+            map = L.map('miniMap', { attributionControl: false }).setView([46.8, 2.4], 6); // France centré par défaut
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // click to set marker and update coords
+            map.on('click', function(e) {
+                const { lat, lng } = e.latlng;
+                setMarker(lat, lng, true);
+                coordInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                showSuccess('✅ Coordonnées mises à jour depuis la carte.');
+            });
+
+            isMapInitialized = true;
+        }
+
+        function setMarker(lat, lon, pan = true) {
+            initMap();
+            if (typeof L === 'undefined') return; // sécurité supplémentaire
+
+            if (!marker) {
+                marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+                // when marker is dragged, update coords input
+                marker.on('dragend', function(e) {
+                    const pos = marker.getLatLng();
+                    coordInput.value = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
+                    showSuccess('✅ Coordonnées mises à jour depuis le marqueur.');
+                });
+            } else {
+                marker.setLatLng([lat, lon]);
+            }
+            if (pan) map.setView([lat, lon], 16);
+            // ensure map renders properly if it was hidden initially
+            setTimeout(() => { map.invalidateSize(); }, 200);
+        }
+
+        function updateMap(lat, lon, showIfHidden = false) {
+            if (lat === undefined || lon === undefined) return;
+            if (!isMapInitialized && showIfHidden) initMap();
+            if (!isMapInitialized) initMap();
+            if (typeof L === 'undefined') return;
+            setMarker(lat, lon, true);
+        }
+
+        // bouton geolocate
+        geolocateBtn.addEventListener('click', function () {
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            const address = adresseInput.value.trim();
+            geocodeAddress(address);
+        });
+
+        // Si l'utilisateur édite manuellement les coordonnées -> mettre à jour la carte
+        coordInput.addEventListener('blur', function() {
+            const v = coordInput.value.trim();
+            if (!v) {
+                // si champ vide, cacher la carte
+                miniMapEl.style.display = 'none';
+                mapControls.style.display = 'none';
+                return;
+            }
+            const parts = v.split(',').map(s => s.trim());
+            if (parts.length !== 2) {
+                showError('⚠️ Format de coordonnées invalide. Utilisez: latitude, longitude.');
+                return;
+            }
+            const lat = parseFloat(parts[0]);
+            const lon = parseFloat(parts[1]);
+            if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                showError('⚠️ Coordonnées invalides. La latitude doit être entre -90 et 90, la longitude entre -180 et 180.');
+                return;
+            }
+            // ok -> update map and clear errors
+            errorDiv.style.display = 'none';
+            updateMap(lat, lon, true);
+            showSuccess('✅ Coordonnées affichées sur la carte.');
+        });
+
+        // Effacer coords
+        resetMapBtn.addEventListener('click', function() {
+            coordInput.value = '';
+            if (marker && map) {
+                map.removeLayer(marker);
+                marker = null;
+            }
+            miniMapEl.style.display = 'none';
+            mapControls.style.display = 'none';
+            showSuccess('Coordonnées effacées.');
+        });
+
+        // Auto géolocaliser au blur de l'adresse si coords vides (comportement optionnel)
+        adresseInput.addEventListener('blur', function() {
+            const address = adresseInput.value.trim();
+            if (address.length > 5 && !coordInput.value.trim()) {
+                // légère temporisation pour ne pas gêner la saisie
+                setTimeout(() => {
+                    if (!coordInput.value.trim()) geocodeAddress(address);
+                }, 400);
+            }
+        });
+
+        // ---------------------------
+        // Form submit (existant)
+        // ---------------------------
         document.getElementById('poiForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            errorDiv.style.display = 'none';
 
             // Récupérer et parser les coordonnées
             const coordonneesInput = document.getElementById('coordonnees').value.trim();
             const coordsParts = coordonneesInput.split(',').map(c => c.trim());
-            
+
             if (coordsParts.length !== 2) {
-                const errorDiv = document.getElementById('errorMessage');
-                errorDiv.textContent = '⚠️ Format de coordonnées invalide. Utilisez le format: latitude, longitude (ex: 48.359944, 2.824667)';
-                errorDiv.style.display = 'block';
+                const errorDivLocal = document.getElementById('errorMessage');
+                errorDivLocal.textContent = '⚠️ Format de coordonnées invalide. Utilisez le format: latitude, longitude (ex: 48.359944, 2.824667)';
+                errorDivLocal.style.display = 'block';
                 return;
             }
 
@@ -266,9 +473,9 @@
             const lng = parseFloat(coordsParts[1]);
 
             if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                const errorDiv = document.getElementById('errorMessage');
-                errorDiv.textContent = '⚠️ Coordonnées invalides. La latitude doit être entre -90 et 90, la longitude entre -180 et 180.';
-                errorDiv.style.display = 'block';
+                const errorDivLocal = document.getElementById('errorMessage');
+                errorDivLocal.textContent = '⚠️ Coordonnées invalides. La latitude doit être entre -90 et 90, la longitude entre -180 et 180.';
+                errorDivLocal.style.display = 'block';
                 return;
             }
 
@@ -301,7 +508,7 @@
 
             // Créer le contenu de l'email
             const sujet = encodeURIComponent(`[Carte Interactive] Nouveau point d'intérêt : ${formData.nom}`);
-            
+
             const corps = encodeURIComponent(`Bonjour,
 
 Je souhaite proposer l'ajout d'un nouveau point d'intérêt sur la carte interactive.
@@ -333,10 +540,23 @@ Cordialement`);
 
             // Créer le lien mailto
             const mailtoLink = `mailto:geo-asso@proton.me?subject=${sujet}&body=${corps}`;
-            
+
             // Ouvrir le client email
             window.location.href = mailtoLink;
         });
+
+        // Si la page s'ouvre avec des coordonnées déjà présentes (pré-remplies), afficher la carte
+        (function checkInitialCoords() {
+            const v = coordInput.value.trim();
+            if (!v) return;
+            const parts = v.split(',').map(s => s.trim());
+            if (parts.length !== 2) return;
+            const lat = parseFloat(parts[0]);
+            const lon = parseFloat(parts[1]);
+            if (!isNaN(lat) && !isNaN(lon)) {
+                updateMap(lat, lon, true);
+            }
+        })();
     </script>
 </body>
 </html>
