@@ -32,6 +32,24 @@
         }
       ],
       "site_web": "https://www.facebook.com/remonderessourcerie/?locale=fr_FR"
-    }
+    },
+    {
+      "nom": "Au Bon Repépère",
+      "categorie": "repair café",
+      "lat": 48.349354,
+      "lng": 2.852803,
+      "description": "Créer du lien en luttant contre la surconsommation et en organisant des scènes ouvertes musicales et tout évènement du même ordre.",
+      "adresse": "16 rue des joncs , Montarlot",
+      "site_web": "https://www.facebook.com/people/Au-Bon-Rep%C3%A9p%C3%A8re/61560201384716/",
+      "horaires": [
+      {
+      "jours": [
+      "Jeudi"
+      ],
+      "ouverture": "10:00",
+      "fermeture": "17:00"
+      }
+      ]
+      }
   ]
 }
