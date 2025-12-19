@@ -1,21 +1,37 @@
 {
   "points": [
     {
-      "nom": "Chapiteau Les Pucks",
-      "categorie": "cirque",
-      "lat": 48.3599,
-      "lng": 2.8246,
-      "description": "Chapiteau des Pucks",
-      "adresse": "77250 Moret-Loing-et-Orvanne",
-      "telephone": "01 42 00 00 00"
-    },
-    {
-      "nom": " Rémonde Ressourcerie",
-      "categorie": "restaurant",
-      "lat": 48.385,
-      "lng": 2.9700,
-      "description": "Ressourcerie ",
-      "adresse": " 1 Rue des Prés Saint-Martin, 77130 Montereau-Fault-Yonne, France"
-   }   
+      "nom": "Rémonde",
+      "adresse": "1 Rue des Prés Saint-Martin, 77130 Montereau-Fault-Yonne",
+      "lat": 48.3852979,
+      "lng": 2.9700363,
+      "categorie": "ressourcerie",
+      "telephone": "01 85 45 08 15",
+      "email": "pierre.garnier@re-monde.org",
+      "description": "Rémonde est une société coopérative d’intérêt collectif (SCIC) situé à Montereau-Fault-Yonne en Seine et Marne. Une SCIC est un modèle d’entreprise qui pratique la gouvernance démocratique (1 personne = 1 voix) et le développement local. Son objectif est de collecter les encombrants pour leur donner une seconde vie à petit prix dans un souci de protection environnemental et de réemploi.\n\nLa ressourcerie vous propose d’effectuer un débarras (devis selon le volume) ou de venir déposer vos objets directement dans nos locaux. Vous êtes sûr qu’ils seront revendus à prix solidaire ou valoriser en filière de tri.",
+      "horaires": [
+        {
+          "jours": "Mardi",
+          "heures": "14:00-18:00"
+        },
+        {
+          "jours": "Jeudi",
+          "heures": "14:00-18:00"
+        },
+        {
+          "jours": "Vendredi",
+          "heures": "14:00-18:00"
+        },
+        {
+          "jours": "Mercredi",
+          "heures": "10:00-18:00"
+        },
+        {
+          "jours": "Samedi",
+          "heures": "10:00-18:00"
+        }
+      ],
+      "site_web": "https://www.facebook.com/remonderessourcerie/?locale=fr_FR"
+    }
   ]
 }
