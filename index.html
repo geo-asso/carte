@@ -72,6 +72,10 @@
             margin: 5px 0;
             color: #555;
         }
+        .leaflet-popup-content .horaires {
+            white-space: pre-wrap; /* conserve les retours à la ligne */
+            color: #333;
+        }
         .loading {
             text-align: center;
             padding: 20px;
@@ -186,13 +190,62 @@
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             }),
-            repaircafé: L.divIcon({
+            'repaircafé': L.divIcon({
                 className: 'custom-icon',
                 html: '<div style="background: #e74c3c; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             })            
         };
+
+        // Fonction pour échapper le HTML (sécurité)
+        function escapeHtml(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            return String(unsafe)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Normalise et rend les horaires en HTML (gère plusieurs formats)
+        function renderHoraires(horaires) {
+            if (!horaires) return '';
+            let lines = [];
+
+            // Si c'est une chaîne — on conserve les retours à la ligne
+            if (typeof horaires === 'string') {
+                // split pour garder chaque ligne
+                lines = horaires.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            }
+            // Si tableau (strings ou objets)
+            else if (Array.isArray(horaires)) {
+                horaires.forEach(item => {
+                    if (typeof item === 'string') {
+                        lines.push(item);
+                    } else if (typeof item === 'object' && (item.jours || item.heures)) {
+                        const jours = item.jours ? item.jours : '';
+                        const heures = item.heures ? item.heures : '';
+                        lines.push((jours + (jours && heures ? ': ' : '') + heures).trim());
+                    } else {
+                        // fallback
+                        lines.push(JSON.stringify(item));
+                    }
+                });
+            }
+            // Si objet mapping jour -> heures
+            else if (typeof horaires === 'object') {
+                for (const [k, v] of Object.entries(horaires)) {
+                    lines.push(`${k}: ${v}`);
+                }
+            } else {
+                lines = [String(horaires)];
+            }
+
+            // Échapper le HTML et joindre avec <br>
+            return lines.map(escapeHtml).join('<br>');
+        }
 
         // Fonction pour charger les points d'intérêt depuis le fichier JSON
         async function chargerPointsInteret() {
@@ -224,7 +277,7 @@
                         <li>Si vous utilisez un fichier local, testez avec un serveur local (pas en double-cliquant sur le fichier HTML)</li>
                     </ul>
                     <br>
-                    <em>Erreur technique : ${error.message}</em>
+                    <em>Erreur technique : ${escapeHtml(error.message)}</em>
                 `;
             }
         }
@@ -234,19 +287,24 @@
             const markers = [];
             
             points.forEach(point => {
+                const iconKey = point.categorie || 'ressourcerie';
+                const icon = icons[iconKey] || icons['ressourcerie'];
+
                 const marker = L.marker([point.lat, point.lng], {
-                    icon: icons[point.categorie] || icons.ressourcerie
+                    icon: icon
                 }).addTo(map);
+
+                const horairesHtml = renderHoraires(point.horaires);
 
                 const popupContent = `
                     <div style="min-width: 200px;">
-                        <h3>${point.nom}</h3>
-                        <p><strong>📍 Adresse:</strong> ${point.adresse}</p>
-                        <p><strong>📞 Téléphone:</strong> ${point.telephone || 'Non renseigné'}</p>
-                        <p><strong>ℹ️ E-mail:</strong> ${point.email || 'Non renseigné'}</p>
-                        <p><strong>ℹ️ Description:</strong> ${point.description}</p>
-                        ${point.horaires ? `<p><strong>🕐 Horaires:</strong> ${point.horaires}</p>` : ''}
-                        ${point.site_web ? `<p><strong>🌐 Site:</strong> <a href="${point.site_web}" target="_blank">Visiter</a></p>` : ''}
+                        <h3>${escapeHtml(point.nom)}</h3>
+                        <p><strong>📍 Adresse:</strong> ${escapeHtml(point.adresse)}</p>
+                        <p><strong>📞 Téléphone:</strong> ${escapeHtml(point.telephone || 'Non renseigné')}</p>
+                        <p><strong>ℹ️ E-mail:</strong> ${escapeHtml(point.email || 'Non renseigné')}</p>
+                        <p><strong>ℹ️ Description:</strong> ${escapeHtml(point.description || '')}</p>
+                        ${horairesHtml ? `<p><strong>🕐 Horaires:</strong><br><span class="horaires">${horairesHtml}</span></p>` : ''}
+                        ${point.site_web ? `<p><strong>🌐 Site:</strong> <a href="${escapeHtml(point.site_web)}" target="_blank" rel="noopener">Visiter</a></p>` : ''}
                     </div>
                 `;
 
@@ -265,18 +323,18 @@
             const stats = {
                 total: points.length,
                 ressourcerie: 0,
-                repaircafé: 0
+                'repaircafé': 0
             };
 
             points.forEach(point => {
-                if (stats[point.categorie] !== undefined) {
+                if (point.categorie && stats[point.categorie] !== undefined) {
                     stats[point.categorie]++;
                 }
             });
 
             document.getElementById('total-count').textContent = stats.total;
-            document.getElementById('ressourcerie-count').textContent = stats.ressourcerie;
-            document.getElementById('repaircafe-count').textContent = stats.repaircafé;
+            document.getElementById('ressourcerie-count').textContent = stats.ressourcerie || 0;
+            document.getElementById('repaircafe-count').textContent = stats['repaircafé'] || 0;
             document.getElementById('stats').style.display = 'flex';
         }
 
