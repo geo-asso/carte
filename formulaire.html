@@ -176,19 +176,6 @@
             </div>
 
             <div class="form-group">
-                <label for="coordonnees">Coordonnées GPS <span class="required">*</span></label>
-                <input type="text" id="coordonnees" name="coordonnees" required placeholder="Ex: 48.359944, 2.824667" />
-                <p class="help-text">Format: latitude, longitude (séparés par une virgule)</p>
-                <div class="coordinate-helper">
-                    💡 <strong>Comment trouver les coordonnées ?</strong><br />
-                    1. Allez sur <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a><br />
-                    2. Faites un clic droit sur le lieu<br />
-                    3. Cliquez sur les coordonnées en haut pour les copier<br />
-                    4. Collez directement dans le champ ci-dessus (format: 48.359944, 2.824667)
-                </div>
-            </div>
-
-            <div class="form-group">
                 <label for="adresse">Adresse complète <span class="required">*</span></label>
                 <div class="address-row">
                     <input type="text" id="adresse" name="adresse" required placeholder="Ex: 15 Rue de la Paix, 77000 Melun" />
@@ -206,7 +193,18 @@
                     <button type="button" id="resetMapBtn" class="reset-coords" title="Vider les coordonnées">Effacer coordonnées</button>
                 </div>
             </div>
-
+            <div class="form-group">
+                <label for="coordonnees">Coordonnées GPS <span class="required">*</span></label>
+                <input type="text" id="coordonnees" name="coordonnees" required placeholder="Ex: 48.359944, 2.824667" />
+                <p class="help-text">Format: latitude, longitude (séparés par une virgule)</p>
+                <div class="coordinate-helper">
+                    💡 <strong>Comment trouver les coordonnées, si la géolocalisation ne fonctionne pas ?</strong><br />
+                    1. Allez sur <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a><br />
+                    2. Faites un clic droit sur le lieu<br />
+                    3. Cliquez sur les coordonnées en haut pour les copier<br />
+                    4. Collez directement dans le champ ci-dessus (format: 48.359944, 2.824667)
+                </div>
+            </div>
             <div class="form-group">
                 <label for="description">Description <span class="required">*</span></label>
                 <textarea id="description" name="description" required placeholder="Décrivez ce lieu en quelques mots..."></textarea>
