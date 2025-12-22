@@ -166,7 +166,7 @@
                 <span>ressourceries</span>
             </div>
             <div class="legend-item">
-                <div class="legend-icon" style="background: #e74c3c;"></div>
+                <div class="legend-icon" style="background: #3cd7e7;"></div>
                 <span>repair café</span>
             </div>
         </div>
@@ -190,9 +190,9 @@
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             }),
-            'repaircafé': L.divIcon({
+            'repair café': L.divIcon({
                 className: 'custom-icon',
-                html: '<div style="background: #e74c3c; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                html: '<div style="background: #3cd7e7; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             })            
@@ -374,7 +374,7 @@
             const stats = {
                 total: points.length,
                 ressourcerie: 0,
-                'repaircafé': 0
+                'repair café': 0
             };
 
             points.forEach(point => {
@@ -385,7 +385,7 @@
 
             document.getElementById('total-count').textContent = stats.total;
             document.getElementById('ressourcerie-count').textContent = stats.ressourcerie || 0;
-            document.getElementById('repaircafe-count').textContent = stats['repaircafé'] || 0;
+            document.getElementById('repaircafe-count').textContent = stats['repair café'] || 0;
             document.getElementById('stats').style.display = 'flex';
         }
 
