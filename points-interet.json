@@ -42,14 +42,33 @@
       "adresse": "16 rue des joncs , Montarlot",
       "site_web": "https://www.facebook.com/people/Au-Bon-Rep%C3%A9p%C3%A8re/61560201384716/",
       "horaires": [
-      {
-      "jours": [
-      "Jeudi"
-      ],
-      "ouverture": "10:00",
-      "fermeture": "17:00"
-      }
+        {
+          "jours": [
+            "Jeudi"
+          ],
+          "ouverture": "10:00",
+          "fermeture": "17:00"
+        }
       ]
-      }
+    },
+    {
+      "nom": "Au Grenier du Loing",
+      "categorie": "ressourcerie",
+      "lat": 48.270715,
+      "lng": 2.706064,
+      "description": "Nous vous invitons à découvrir nos boutiques uniques et engagées dans le pays de Nemours ! Nous sommes fiers de présenter notre concept de ressourcerie (77) et friperie solidaire, un espace où la solidarité, la réutilisation, et la préservation de l'environnement se rejoignent pour créer une expérience shopping différente.",
+      "adresse": "44 et 46 rue de Chérelles Nemours, France",
+      "telephone": "07 44 77 08 22",
+      "site_web": "https://www.augrenierduloing.fr/",
+      "horaires": [
+        {
+          "jours": [
+            "Vendredi"
+          ],
+          "ouverture": "13:00",
+          "fermeture": "18:00"
+        }
+      ]
+    }
   ]
 }
