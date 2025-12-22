@@ -230,7 +230,7 @@
         <!-- Contrôles : recherche + filtres -->
         <div class="controls">
             <div class="search-box">
-                <input id="search-input" placeholder="Rechercher un point d'intérêt (tolérant aux fautes)..." autocomplete="off" />
+                <input id="search-input" placeholder="Rechercher un point d'intérêt (nom ou adresse, tolérant aux fautes)..." autocomplete="off" />
                 <div id="search-results" style="display:none;"></div>
             </div>
         </div>
@@ -500,9 +500,12 @@
                     p._catNormalized = normalizeCategory(p.categorie);
                 });
 
-                // initialiser Fuse (recherche fuzzy) sur le champ 'nom'
+                // initialiser Fuse (recherche fuzzy) sur les champs 'nom' et 'adresse'
                 fuse = new Fuse(pointsData, {
-                    keys: ['nom'],
+                    keys: [
+                        { name: 'nom', weight: 0.7 },
+                        { name: 'adresse', weight: 0.3 }
+                    ],
                     threshold: 0.45, // ajuster la tolérance (0 = strict, 1 = très permissif)
                     distance: 100,
                     ignoreLocation: true
@@ -647,8 +650,6 @@
                 `;
 
                 marker.bindPopup(popupContent);
-
-                // ajouter écouteur clic sur résultat de recherche : on ne sait pas quel résultat, sera géré ailleurs.
 
                 // stocker
                 markers.push({
