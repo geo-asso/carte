@@ -6,6 +6,8 @@
     <title>Carte Interactive</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- Fuse.js pour la recherche fuzzy -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -143,6 +145,76 @@
         .leaflet-tooltip.poi-label.leaflet-clickable {
             pointer-events: none;
         }
+
+        /* Contrôles de recherche et filtres */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            position: relative;
+            flex: 1 1 400px;
+        }
+        #search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #dcdcdc;
+            font-size: 14px;
+        }
+        #search-results {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e6e6e6;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            max-height: 260px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        #search-results .result-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f4f4f4;
+            cursor: pointer;
+        }
+        #search-results .result-item:hover {
+            background: #f7f9fb;
+        }
+        .filters {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filters label {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            font-size: 14px;
+        }
+        .filters .category-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 6px;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        /* petit style responsive pour mobile */
+        @media (max-width: 700px) {
+            .controls { flex-direction: column; }
+            .search-box { flex: unset; width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -153,6 +225,21 @@
             <strong>💡 Instructions :</strong> Cliquez sur les marqueurs pour voir les détails. Utilisez la molette pour zoomer et faites glisser pour déplacer la carte.
             <br><br>
             <a href="formulaire.html" class="add-point-btn">➕ Ajouter un point d'intérêt</a>
+        </div>
+
+        <!-- Contrôles : recherche + filtres -->
+        <div class="controls">
+            <div class="search-box">
+                <input id="search-input" placeholder="Rechercher un point d'intérêt (tolérant aux fautes)..." autocomplete="off" />
+                <div id="search-results" style="display:none;"></div>
+            </div>
+        </div>
+        <div class="controls">
+            <div class="filters" id="category-filters">
+                <!-- cases à cocher générées dynamiquement -->
+                <strong style="margin-right:8px;">Catégories :</strong>
+                <span id="filters-placeholder">Chargement...</span>
+            </div>
         </div>
 
         <div id="stats" class="stats" style="display: none;">
@@ -214,11 +301,21 @@
                 html: '<div style="background: #3cd7e7; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
-            })            
+            }),
+            // fallback color — généré si catégorie inconnue
+            default: L.divIcon({
+                className: 'custom-icon',
+                html: '<div style="background: #9b59b6; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white;"></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            })
         };
 
-        // Tableau global des marqueurs pour pouvoir ouvrir/fermer les tooltips selon le zoom
-        let markers = [];
+        // Tableau global des marqueurs pour pouvoir le manipuler
+        let markers = []; // éléments: { marker, point, index, normalizedCategory }
+        let pointsData = []; // copie des points chargés
+        let fuse = null;
+        let currentSearchResults = new Set(); // indices des points correspondant à la recherche (si vide = pas de filtrage par recherche)
 
         // Fonction pour échapper le HTML (sécurité)
         function escapeHtml(unsafe) {
@@ -229,6 +326,12 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        // Normalise les catégories (pour comparer facilement)
+        function normalizeCategory(cat) {
+            if (!cat) return 'ressourcerie';
+            return String(cat).trim().toLowerCase();
         }
 
         // Normalise et rend les horaires en HTML (gère plusieurs formats)
@@ -323,18 +426,59 @@
         // Met à jour l'affichage des tooltips en fonction du niveau de zoom
         function updateTooltips() {
             const zoom = map.getZoom();
-            markers.forEach(m => {
+            markers.forEach(mObj => {
                 try {
                     if (zoom >= LABEL_ZOOM_THRESHOLD) {
-                        m.openTooltip();
+                        mObj.marker.openTooltip();
                     } else {
-                        m.closeTooltip();
+                        mObj.marker.closeTooltip();
                     }
                 } catch (e) {
-                    // si le marqueur a été supprimé entre temps
                     console.warn('Erreur lors de l\'ouverture/fermeture du tooltip', e);
                 }
             });
+        }
+
+        // Debounce util
+        function debounce(fn, wait) {
+            let t;
+            return function(...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), wait);
+            };
+        }
+
+        // Appliquer filtres (catégories + recherche)
+        function applyFilters() {
+            // quelles catégories sont cochées ?
+            const checkedBoxes = Array.from(document.querySelectorAll('#category-filters input[type=checkbox]:checked'));
+            const checkedCategories = new Set(checkedBoxes.map(cb => cb.value));
+
+            // si aucune case cochée => on affiche rien (respect de la demande)
+            markers.forEach(mObj => {
+                const cat = mObj.normalizedCategory;
+                const matchesCategory = checkedCategories.has(cat);
+                const matchesSearch = (currentSearchResults.size === 0) || currentSearchResults.has(mObj.index);
+
+                const shouldBeVisible = matchesCategory && matchesSearch;
+
+                if (shouldBeVisible) {
+                    if (!map.hasLayer(mObj.marker)) {
+                        mObj.marker.addTo(map);
+                    }
+                } else {
+                    if (map.hasLayer(mObj.marker)) {
+                        map.removeLayer(mObj.marker);
+                    }
+                }
+            });
+
+            // si après filtrage il y a au moins un marqueur visible, on ajuste la vue
+            const visibleMarkers = markers.filter(m => map.hasLayer(m.marker)).map(m => m.marker);
+            if (visibleMarkers.length > 0) {
+                const group = L.featureGroup(visibleMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
         }
 
         // Fonction pour charger les points d'intérêt depuis le fichier JSON
@@ -348,10 +492,28 @@
                 }
                 
                 const data = await response.json();
-                afficherPointsInteret(data.points);
-                afficherStatistiques(data.points);
+                pointsData = data.points || [];
+
+                // ajouter un index et normaliser les catégories
+                pointsData.forEach((p, i) => {
+                    p._idx = i;
+                    p._catNormalized = normalizeCategory(p.categorie);
+                });
+
+                // initialiser Fuse (recherche fuzzy) sur le champ 'nom'
+                fuse = new Fuse(pointsData, {
+                    keys: ['nom'],
+                    threshold: 0.45, // ajuster la tolérance (0 = strict, 1 = très permissif)
+                    distance: 100,
+                    ignoreLocation: true
+                });
+
+                buildCategoryFilters(pointsData);
+                afficherPointsInteret(pointsData);
+                afficherStatistiques(pointsData);
                 
                 document.getElementById('loading').style.display = 'none';
+                document.getElementById('filters-placeholder')?.remove();
                 
             } catch (error) {
                 console.error('Erreur lors du chargement:', error);
@@ -372,31 +534,101 @@
             }
         }
 
+        // Construire les cases à cocher pour les catégories (dynamiquement)
+        function buildCategoryFilters(points) {
+            const container = document.getElementById('category-filters');
+            container.innerHTML = ''; // vide
+
+            // Rassembler catégories uniques (normalisées) et garder exemple d'affichage original (couleur)
+            const catMap = new Map(); // normalized -> { originalName, color }
+            points.forEach(p => {
+                const norm = normalizeCategory(p.categorie);
+                if (!catMap.has(norm)) {
+                    catMap.set(norm, {
+                        originalName: p.categorie || 'ressourcerie',
+                        color: inferColorForCategory(p.categorie)
+                    });
+                }
+            });
+
+            // Si aucune catégorie détectée, proposer au moins les deux connues
+            if (catMap.size === 0) {
+                catMap.set('ressourcerie', { originalName: 'ressourcerie', color: '#e74c3c' });
+                catMap.set('repair café', { originalName: 'repair café', color: '#3cd7e7' });
+            }
+
+            // Construire les inputs (par défaut cochés)
+            catMap.forEach((meta, norm) => {
+                const id = `cat-${norm.replace(/\s+/g, '-')}`;
+                const label = document.createElement('label');
+                label.setAttribute('for', id);
+                label.innerHTML = `
+                    <input type="checkbox" id="${id}" value="${norm}" checked />
+                    <span class="category-color" style="background:${meta.color}"></span>
+                    ${escapeHtml(meta.originalName)}
+                `;
+                container.appendChild(label);
+            });
+
+            // Écouteurs sur changements
+            container.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    applyFilters();
+                });
+            });
+        }
+
+        // Devine une couleur pour la catégorie (simple mapping pour garder cohérence)
+        function inferColorForCategory(cat) {
+            const norm = normalizeCategory(cat);
+            if (norm === 'ressourcerie') return '#e74c3c';
+            if (norm === 'repair café' || norm === 'repair cafe' || norm === 'repair') return '#3cd7e7';
+            // fallback palette
+            const colors = ['#9b59b6','#f1c40f','#2ecc71','#e67e22','#3498db','#1abc9c'];
+            // stable hash
+            let h = 0;
+            for (let i=0;i<norm.length;i++) h = (h<<5) - h + norm.charCodeAt(i);
+            return colors[Math.abs(h) % colors.length];
+        }
+
         // Fonction pour afficher les points sur la carte
         function afficherPointsInteret(points) {
             // Supprimer les marqueurs existants si appel répété
             if (markers.length > 0) {
                 markers.forEach(m => {
-                    try { map.removeLayer(m); } catch (e) {}
+                    try { map.removeLayer(m.marker); } catch (e) {}
                 });
                 markers = [];
             }
 
-            points.forEach(point => {
-                const iconKey = point.categorie || 'ressourcerie';
-                const icon = icons[iconKey] || icons['ressourcerie'];
+            points.forEach((point, i) => {
+                const iconKey = (point.categorie && icons[point.categorie]) ? point.categorie : (icons[point.categorie] ? point.categorie : (icons[normalizeCategory(point.categorie)] ? normalizeCategory(point.categorie) : null));
+                // pick fallback icon by normalized category if predefined, else default
+                let icon = icons.default;
+                if (point.categorie && icons[point.categorie]) icon = icons[point.categorie];
+                else if (icons[normalizeCategory(point.categorie)]) icon = icons[normalizeCategory(point.categorie)];
+                else {
+                    // generate a small colored divIcon based on inferred color
+                    const color = inferColorForCategory(point.categorie);
+                    icon = L.divIcon({
+                        className: 'custom-icon',
+                        html: `<div style="background: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
+                        iconSize: [30,30],
+                        iconAnchor: [15,15]
+                    });
+                }
 
                 const marker = L.marker([point.lat, point.lng], {
                     icon: icon
-                }).addTo(map);
+                });
 
-                // Lier un tooltip (nom) au marqueur — on l'ouvrira/fermera selon le zoom
+                // Lier un tooltip (nom) au marqueur — on l'ouvrira/fermettra selon le zoom
                 const labelText = escapeHtml(point.nom || '');
                 marker.bindTooltip(labelText, {
                     direction: 'top',
                     offset: [0, -20],
                     className: 'poi-label',
-                    permanent: false, // on contrôlera l'affichage via openTooltip/closeTooltip
+                    permanent: false,
                     opacity: 0.95
                 });
 
@@ -415,16 +647,26 @@
                 `;
 
                 marker.bindPopup(popupContent);
-                markers.push(marker);
-            });
 
-            if (markers.length > 0) {
-                const group = L.featureGroup(markers);
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
+                // ajouter écouteur clic sur résultat de recherche : on ne sait pas quel résultat, sera géré ailleurs.
+
+                // stocker
+                markers.push({
+                    marker: marker,
+                    point: point,
+                    index: point._idx,
+                    normalizedCategory: point._catNormalized
+                });
+
+                // par défaut on ajoute au map (mais later applyFilters décidera de la visibilité selon cases cochées)
+                marker.addTo(map);
+            });
 
             // Mettre à jour l'affichage des tooltips en fonction du zoom actuel
             updateTooltips();
+
+            // initial apply filters (pour prendre en compte les cases cochées par défaut)
+            applyFilters();
         }
 
         // Fonction pour afficher les statistiques
@@ -436,9 +678,9 @@
             };
 
             points.forEach(point => {
-                if (point.categorie && stats[point.categorie] !== undefined) {
-                    stats[point.categorie]++;
-                }
+                const cat = normalizeCategory(point.categorie);
+                if (cat === 'ressourcerie') stats.ressourcerie++;
+                if (cat === 'repair café' || cat === 'repair cafe' || cat === 'repair') stats['repair café']++;
             });
 
             document.getElementById('total-count').textContent = stats.total;
@@ -446,6 +688,90 @@
             document.getElementById('repaircafe-count').textContent = stats['repair café'] || 0;
             document.getElementById('stats').style.display = 'flex';
         }
+
+        // Gestion de la recherche : affiche suggestions et met à jour currentSearchResults
+        const searchInput = document.getElementById('search-input');
+        const resultsBox = document.getElementById('search-results');
+
+        function renderSearchResults(items) {
+            if (!items || items.length === 0) {
+                resultsBox.style.display = 'none';
+                resultsBox.innerHTML = '';
+                return;
+            }
+            resultsBox.style.display = 'block';
+            resultsBox.innerHTML = '';
+            items.slice(0, 10).forEach(res => {
+                // res peut être un élément Fuse result (item) ou un point (si we call direct)
+                const point = res.item ? res.item : res;
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `<strong>${escapeHtml(point.nom)}</strong><br><small>${escapeHtml(point.adresse || '')}</small>`;
+                div.addEventListener('click', () => {
+                    onSelectSearchResult(point);
+                });
+                resultsBox.appendChild(div);
+            });
+        }
+
+        // selection d'un résultat : zoom sur le point et ouvrir popup
+        function onSelectSearchResult(point) {
+            // s'assurer que la catégorie du point est cochée — si non, cocher
+            const norm = point._catNormalized;
+            const checkbox = Array.from(document.querySelectorAll('#category-filters input[type=checkbox]')).find(cb => cb.value === norm);
+            if (checkbox && !checkbox.checked) {
+                checkbox.checked = true;
+            }
+
+            // recalculer filtres pour être sûr que le marker est affiché
+            applyFilters();
+
+            // trouver le marker correspondant
+            const mObj = markers.find(m => m.index === point._idx);
+            if (mObj) {
+                const m = mObj.marker;
+                // ouvrir popup et recentrer/zoomer
+                if (!map.hasLayer(m)) {
+                    m.addTo(map);
+                }
+                map.setView(m.getLatLng(), Math.max(map.getZoom(), 15), { animate: true });
+                m.openPopup();
+            }
+
+            // masquer résultats
+            resultsBox.style.display = 'none';
+            resultsBox.innerHTML = '';
+            searchInput.value = point.nom || '';
+            // mettre currentSearchResults à seulement cet élément
+            currentSearchResults = new Set([point._idx]);
+            applyFilters();
+        }
+
+        // Mettre à jour la recherche (déclenchée par input)
+        const performSearch = debounce(() => {
+            const q = searchInput.value.trim();
+            if (!q) {
+                currentSearchResults = new Set();
+                renderSearchResults([]);
+                applyFilters();
+                return;
+            }
+            if (!fuse) return;
+            const results = fuse.search(q);
+            // normaliser currentSearchResults
+            currentSearchResults = new Set(results.map(r => r.item._idx));
+            renderSearchResults(results);
+            applyFilters();
+        }, 220);
+
+        searchInput.addEventListener('input', performSearch);
+
+        // Si clic en dehors, cacher les résultats
+        document.addEventListener('click', (e) => {
+            if (!document.querySelector('.search-box').contains(e.target)) {
+                resultsBox.style.display = 'none';
+            }
+        });
 
         // Écouteur pour mettre à jour les tooltips à chaque changement de zoom
         map.on('zoomend', updateTooltips);
