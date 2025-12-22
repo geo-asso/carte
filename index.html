@@ -222,16 +222,67 @@
             // Si tableau (strings ou objets)
             else if (Array.isArray(horaires)) {
                 horaires.forEach(item => {
+                    // cas simple : string
                     if (typeof item === 'string') {
                         lines.push(item);
-                    } else if (typeof item === 'object' && (item.jours || item.heures)) {
-                        const jours = item.jours ? item.jours : '';
-                        const heures = item.heures ? item.heures : '';
-                        lines.push((jours + (jours && heures ? ': ' : '') + heures).trim());
-                    } else {
-                        // fallback
-                        lines.push(JSON.stringify(item));
+                        return;
                     }
+
+                    // cas: objet avec jours (tableau) et ouverture/fermeture
+                    if (item && typeof item === 'object' && Array.isArray(item.jours) && (item.ouverture || item.fermeture || item.heures)) {
+                        const jours = item.jours.join(', ');
+                        let horaireTexte = '';
+
+                        // Priorité à ouverture/fermeture
+                        if (item.ouverture || item.fermeture) {
+                            const ouverture = item.ouverture || '';
+                            const fermeture = item.fermeture || '';
+                            if (ouverture && fermeture) {
+                                horaireTexte = `${ouverture} - ${fermeture}`;
+                            } else if (ouverture) {
+                                horaireTexte = `Ouverture: ${ouverture}`;
+                            } else if (fermeture) {
+                                horaireTexte = `Fermeture: ${fermeture}`;
+                            }
+                        } else if (item.heures) {
+                            // fallback si ancien champ "heures"
+                            horaireTexte = item.heures;
+                        }
+
+                        lines.push((jours + (jours && horaireTexte ? ': ' : '') + horaireTexte).trim());
+                        return;
+                    }
+
+                    // cas: objet avec jours (tableau) mais sans champ heures explicite
+                    if (item && typeof item === 'object' && Array.isArray(item.jours) && !(item.ouverture || item.fermeture || item.heures)) {
+                        const jours = item.jours.join(', ');
+                        lines.push(jours);
+                        return;
+                    }
+
+                    // cas: objet mapping jour -> heures ou clé "heures"
+                    if (item && typeof item === 'object') {
+                        // si l'objet ressemble à { jours: 'Lundi', heures: '...' } géré plus haut
+                        if (item.jours && typeof item.jours === 'string' && item.heures) {
+                            lines.push(`${item.jours}: ${item.heures}`);
+                            return;
+                        }
+                        // mapping jour->heures (ex: { "Lundi": "9-18", "Mardi": "..." })
+                        const entries = Object.entries(item);
+                        if (entries.length > 0 && entries.every(([k, v]) => typeof k === 'string')) {
+                            entries.forEach(([k, v]) => {
+                                lines.push(`${k}: ${v}`);
+                            });
+                            return;
+                        }
+
+                        // fallback générique
+                        lines.push(JSON.stringify(item));
+                        return;
+                    }
+
+                    // fallback si autre type
+                    lines.push(String(item));
                 });
             }
             // Si objet mapping jour -> heures
